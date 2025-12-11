@@ -97,6 +97,8 @@ class FileController:
                 descriptor.needs_sheet_selection = False
                 descriptor.set_loaded()
                 logger.info(f"CSV fully loaded: {descriptor.filename} with {len(df)} rows, {len(df.columns)} columns")
+                # Notify mapping controller of new file data
+                self._notify_mapping_changed()
 
         elif descriptor.file_type == 'xlsx':
             descriptor.available_sheets = metadata.get('sheets', [])
@@ -114,6 +116,9 @@ class FileController:
 
         # Remove from model
         self.app_controller.file_model.remove_file(file_id)
+
+        # Notify mapping controller of file removal
+        self._notify_mapping_changed()
 
         # Refresh UI
         self.refresh_file_list()
@@ -161,6 +166,8 @@ class FileController:
             descriptor.needs_sheet_selection = False
             descriptor.set_loaded()
             logger.info(f"XLSX sheet fully loaded: {descriptor.filename}[{sheet_name}] with {len(df)} rows, {len(df.columns)} columns")
+            # Notify mapping controller of new file data
+            self._notify_mapping_changed()
 
         # Refresh UI to update the file item widget
         self.refresh_file_list()
@@ -171,3 +178,15 @@ class FileController:
             files = self.app_controller.file_model.get_all_files()
             self.view.refresh(files)
             logger.debug(f"Refreshed file list with {len(files)} files")
+
+    def _notify_mapping_changed(self):
+        """
+        Notify the mapping controller that file data has changed.
+
+        This triggers rebuilding of column mappings.
+        """
+        if self.app_controller.mapping_controller:
+            logger.debug("Notifying mapping controller of file changes")
+            self.app_controller.mapping_controller.rebuild_mapping_from_files()
+        else:
+            logger.debug("Mapping controller not available for notification")

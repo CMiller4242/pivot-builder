@@ -3,10 +3,12 @@
 from pivot_builder.config.logging_config import logger
 from pivot_builder.models.file_model import FileModel
 from pivot_builder.models.dataset_model import DatasetModel
-from pivot_builder.models.mapping_model import MappingModel
+from pivot_builder.models.mapping_model import ColumnMappingModel, MappingRule
 from pivot_builder.models.pivot_model import PivotModel
 from pivot_builder.models.validation_model import ValidationModel
 from pivot_builder.models.export_model import ExportModel
+from pivot_builder.services.column_normalization_service import ColumnNormalizationService
+from pivot_builder.services.column_matching_service import ColumnMatchingService
 
 
 class AppController:
@@ -16,7 +18,14 @@ class AppController:
         # Initialize models
         self.file_model = FileModel()
         self.dataset_model = DatasetModel()
-        self.mapping_model = MappingModel()
+
+        # Initialize mapping services and model
+        self.mapping_rule = MappingRule()  # Default normalization rule
+        self.column_normalization_service = ColumnNormalizationService(self.mapping_rule)
+        self.column_matching_service = ColumnMatchingService(self.column_normalization_service)
+        self.column_mapping_model = ColumnMappingModel()
+
+        # Other models
         self.pivot_model = PivotModel()
         self.validation_model = ValidationModel()
         self.export_model = ExportModel()

@@ -24,7 +24,12 @@ def main():
 
     # Create sub-controllers
     file_controller = FileController(app_controller)
-    mapping_controller = MappingController(app_controller)
+    mapping_controller = MappingController(
+        app_controller,
+        app_controller.column_normalization_service,
+        app_controller.column_matching_service,
+        app_controller.column_mapping_model
+    )
     preview_controller = PreviewController(app_controller)
     pivot_controller = PivotController(app_controller)
     export_controller = ExportController(app_controller)

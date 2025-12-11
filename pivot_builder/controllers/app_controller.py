@@ -48,6 +48,24 @@ class AppController:
         """Set the export controller."""
         self.export_controller = controller
 
+    def register_file(self, file_descriptor):
+        """
+        Register a file descriptor in the file model.
+
+        Args:
+            file_descriptor: FileDescriptor instance to register
+        """
+        self.file_model.add_file(file_descriptor)
+        logger.info(f"Registered file: {file_descriptor.filename} (ID: {file_descriptor.id})")
+
+    def on_add_files(self):
+        """Handle add files action (delegates to file controller)."""
+        if self.file_controller:
+            self.file_controller.on_add_files()
+        else:
+            logger.warning("File controller not initialized")
+
     def refresh_all(self):
         """Refresh all views."""
-        pass
+        if self.file_controller:
+            self.file_controller.refresh_file_list()

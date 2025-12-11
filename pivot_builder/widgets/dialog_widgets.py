@@ -29,8 +29,13 @@ class DialogWidgets:
 
     @staticmethod
     def open_file_dialog(file_types):
-        """Show file open dialog."""
+        """Show file open dialog (single file)."""
         return filedialog.askopenfilename(filetypes=file_types)
+
+    @staticmethod
+    def open_files_dialog(file_types):
+        """Show file open dialog (multiple files)."""
+        return filedialog.askopenfilenames(filetypes=file_types)
 
     @staticmethod
     def save_file_dialog(file_types):

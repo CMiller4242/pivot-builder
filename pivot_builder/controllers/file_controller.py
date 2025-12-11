@@ -1,8 +1,13 @@
 """Controller for file operations."""
 
+from typing import List
+
 from pivot_builder.config.logging_config import logger
+from pivot_builder.config.app_config import SUPPORTED_FILE_TYPES
 from pivot_builder.services.file_service import FileService
 from pivot_builder.services.sheet_detection_service import SheetDetectionService
+from pivot_builder.models.file_model import FileDescriptor, FileModel
+from pivot_builder.widgets.dialog_widgets import DialogWidgets
 
 
 class FileController:
@@ -18,22 +23,122 @@ class FileController:
         """Set the view for this controller."""
         self.view = view
 
-    def on_add_file(self):
-        """Handle add file action."""
-        pass
+    def on_add_files(self):
+        """Handle add files action (opens file dialog)."""
+        logger.info("Opening file dialog for adding files")
 
-    def on_remove_file(self, file_path):
-        """Handle remove file action."""
-        pass
+        # Open file dialog for multiple files
+        file_paths = DialogWidgets.open_files_dialog(SUPPORTED_FILE_TYPES)
 
-    def on_file_selected(self, file_path):
-        """Handle file selection."""
-        pass
+        if not file_paths:
+            logger.info("No files selected")
+            return
 
-    def on_sheet_selected(self, sheet_name):
-        """Handle sheet selection."""
-        pass
+        # Process each selected file
+        for file_path in file_paths:
+            self.add_file(file_path)
 
-    def load_file(self, file_path):
-        """Load a file."""
-        pass
+    def add_file(self, file_path: str):
+        """
+        Add a single file to the application.
+
+        Args:
+            file_path: Path to the file to add
+        """
+        logger.info(f"Adding file: {file_path}")
+
+        # Generate unique file ID
+        file_id = FileModel.generate_file_id()
+
+        # Detect file type
+        file_type = self.file_service.get_file_type(file_path)
+
+        # Create file descriptor
+        descriptor = FileDescriptor(file_id, file_path, file_type)
+
+        # Add to app controller (registers in model)
+        self.app_controller.register_file(descriptor)
+
+        # Load metadata based on file type
+        self.load_file_metadata(descriptor)
+
+        # Refresh UI
+        self.refresh_file_list()
+
+    def load_file_metadata(self, descriptor: FileDescriptor):
+        """
+        Load metadata for a file descriptor.
+
+        Args:
+            descriptor: FileDescriptor to populate with metadata
+        """
+        logger.info(f"Loading metadata for {descriptor.filename}")
+
+        # Load metadata using file service
+        metadata, error = self.file_service.load_file_metadata(str(descriptor.path))
+
+        if error:
+            # Set error status
+            descriptor.set_error(error)
+            logger.error(f"Failed to load {descriptor.filename}: {error}")
+            return
+
+        # Populate descriptor based on file type
+        if descriptor.file_type == 'csv':
+            descriptor.original_columns = metadata.get('columns', [])
+            descriptor.set_loaded()
+            logger.info(f"CSV loaded: {descriptor.filename} with {len(descriptor.original_columns)} columns")
+
+        elif descriptor.file_type == 'xlsx':
+            descriptor.available_sheets = metadata.get('sheets', [])
+            descriptor.set_loaded()
+            logger.info(f"XLSX loaded: {descriptor.filename} with {len(descriptor.available_sheets)} sheets")
+
+    def on_remove_file(self, file_id: str):
+        """
+        Handle remove file action.
+
+        Args:
+            file_id: ID of the file to remove
+        """
+        logger.info(f"Removing file: {file_id}")
+
+        # Remove from model
+        self.app_controller.file_model.remove_file(file_id)
+
+        # Refresh UI
+        self.refresh_file_list()
+
+    def on_file_selected(self, file_id: str):
+        """
+        Handle file selection.
+
+        Args:
+            file_id: ID of the selected file
+        """
+        logger.info(f"File selected: {file_id}")
+
+        # Update selected file in model
+        self.app_controller.file_model.select_file(file_id)
+
+    def on_sheet_selected(self, file_id: str, sheet_name: str):
+        """
+        Handle sheet selection for XLSX files.
+
+        Args:
+            file_id: ID of the file
+            sheet_name: Name of the selected sheet
+        """
+        logger.info(f"Sheet selected: {sheet_name} for file {file_id}")
+
+        # Get file descriptor
+        descriptor = self.app_controller.file_model.get_file(file_id)
+        if descriptor:
+            descriptor.selected_sheet = sheet_name
+
+    def refresh_file_list(self):
+        """Refresh the file list in the UI."""
+        if self.view:
+            files = self.app_controller.file_model.get_all_files()
+            self.view.refresh(files)
+            logger.debug(f"Refreshed file list with {len(files)} files")

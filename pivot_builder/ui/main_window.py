@@ -70,6 +70,14 @@ class MainWindow:
         self.status_bar = StatusBar(self.root)
         self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
+        # Set main window reference in app_controller
+        self.app_controller.set_main_window(self)
+
+    def show_preview_tab(self):
+        """Switch to the Preview tab."""
+        # Find the index of the Preview tab (it's the second tab, index 1)
+        self.notebook.select(1)  # 0=Mapping, 1=Preview, 2=Pivot, 3=Validation
+
     def run(self):
         """Start the application main loop."""
         self.root.mainloop()

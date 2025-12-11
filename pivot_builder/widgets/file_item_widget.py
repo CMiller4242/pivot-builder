@@ -3,6 +3,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from pivot_builder.widgets.sheet_selector_widget import SheetSelectorWidget
+
 
 class FileItemWidget(ttk.Frame):
     """Widget representing a single file in the file list."""
@@ -83,14 +85,8 @@ class FileItemWidget(ttk.Frame):
         metadata_frame.pack(fill=tk.X, pady=(2, 0))
 
         if self.file_descriptor.file_type == 'csv':
+            # CSV: Show column count
             info_text = f"{len(self.file_descriptor.original_columns)} columns"
-        elif self.file_descriptor.file_type == 'xlsx':
-            sheets = len(self.file_descriptor.available_sheets)
-            info_text = f"{sheets} sheet{'s' if sheets != 1 else ''}"
-        else:
-            info_text = ""
-
-        if info_text:
             metadata_label = ttk.Label(
                 metadata_frame,
                 text=info_text,
@@ -98,6 +94,54 @@ class FileItemWidget(ttk.Frame):
                 font=("TkDefaultFont", 8)
             )
             metadata_label.pack(side=tk.LEFT)
+
+            # Add preview button for CSV (data is already loaded)
+            if self.file_descriptor.has_dataframe:
+                self._add_preview_button(metadata_frame)
+
+        elif self.file_descriptor.file_type == 'xlsx':
+            # XLSX: Show sheet selector if sheets are available
+            if self.file_descriptor.available_sheets and self.file_descriptor.needs_sheet_selection:
+                # Add sheet selector
+                sheet_selector = SheetSelectorWidget(
+                    metadata_frame,
+                    self.file_descriptor.id,
+                    self.file_descriptor.available_sheets,
+                    self._on_sheet_selected
+                )
+                sheet_selector.pack(side=tk.LEFT, pady=(2, 0))
+            elif self.file_descriptor.has_dataframe:
+                # Sheet already selected - show selected sheet and preview button
+                selected_sheet_label = ttk.Label(
+                    metadata_frame,
+                    text=f"Sheet: {self.file_descriptor.selected_sheet}",
+                    foreground="blue",
+                    font=("TkDefaultFont", 8)
+                )
+                selected_sheet_label.pack(side=tk.LEFT)
+
+                self._add_preview_button(metadata_frame)
+
+    def _add_preview_button(self, parent):
+        """Add preview button to metadata frame."""
+        preview_btn = ttk.Button(
+            parent,
+            text="Preview",
+            width=10,
+            command=self._on_preview_clicked
+        )
+        preview_btn.pack(side=tk.RIGHT, padx=(5, 0))
+
+    def _on_sheet_selected(self, file_id, sheet_name):
+        """Handle sheet selection."""
+        if self.controller:
+            self.controller.on_sheet_selected(file_id, sheet_name)
+
+    def _on_preview_clicked(self):
+        """Handle preview button click."""
+        # This will be routed through app_controller
+        if self.controller and hasattr(self.controller, 'app_controller'):
+            self.controller.app_controller.on_request_file_preview(self.file_descriptor.id)
 
     def _add_error_info(self, parent):
         """Add error information."""

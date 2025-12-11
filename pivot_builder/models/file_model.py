@@ -18,6 +18,11 @@ class FileDescriptor:
         self.status = "pending"     # pending | loaded | error
         self.error_message = None
 
+        # DataFrame and preview
+        self.dataframe = None  # The full pandas DataFrame
+        self.preview_rows = None  # Cached preview (head N rows)
+        self.needs_sheet_selection = (file_type == "xlsx")  # XLSX needs sheet selection
+
     @property
     def filename(self) -> str:
         """Get the filename without path."""
@@ -28,6 +33,11 @@ class FileDescriptor:
         """Get the file extension."""
         return self.path.suffix
 
+    @property
+    def has_dataframe(self) -> bool:
+        """Check if DataFrame is loaded."""
+        return self.dataframe is not None
+
     def set_error(self, message: str):
         """Set error status with message."""
         self.status = "error"
@@ -37,6 +47,28 @@ class FileDescriptor:
         """Set loaded status."""
         self.status = "loaded"
         self.error_message = None
+
+    def set_dataframe(self, df):
+        """
+        Set the DataFrame for this file.
+
+        Args:
+            df: pandas DataFrame
+        """
+        self.dataframe = df
+        if df is not None:
+            self.original_columns = list(df.columns)
+            self.generate_preview()
+
+    def generate_preview(self, n_rows: int = 50):
+        """
+        Generate a preview of the first N rows.
+
+        Args:
+            n_rows: Number of rows to include in preview
+        """
+        if self.dataframe is not None:
+            self.preview_rows = self.dataframe.head(n_rows)
 
 
 class FileModel:

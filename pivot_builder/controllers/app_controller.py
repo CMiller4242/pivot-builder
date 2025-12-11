@@ -65,7 +65,33 @@ class AppController:
         else:
             logger.warning("File controller not initialized")
 
+    def on_request_file_preview(self, file_id: str):
+        """
+        Handle file preview request.
+
+        Args:
+            file_id: ID of the file to preview
+        """
+        logger.info(f"Preview requested for file ID: {file_id}")
+
+        if self.preview_controller:
+            # Show preview for the file
+            self.preview_controller.show_preview_for(file_id)
+
+            # Switch to preview tab (will be implemented in main_window)
+            if hasattr(self, 'main_window') and self.main_window:
+                self.main_window.show_preview_tab()
+        else:
+            logger.warning("Preview controller not initialized")
+
+    def set_main_window(self, main_window):
+        """Set reference to main window for tab switching."""
+        self.main_window = main_window
+
     def refresh_all(self):
         """Refresh all views."""
         if self.file_controller:
             self.file_controller.refresh_file_list()
+
+        if self.preview_controller:
+            self.preview_controller.refresh_preview()

@@ -86,13 +86,22 @@ class FileController:
         # Populate descriptor based on file type
         if descriptor.file_type == 'csv':
             descriptor.original_columns = metadata.get('columns', [])
-            descriptor.set_loaded()
-            logger.info(f"CSV loaded: {descriptor.filename} with {len(descriptor.original_columns)} columns")
+
+            # For CSV, load DataFrame immediately
+            df, df_error = self.file_service.load_csv_dataframe(str(descriptor.path))
+            if df_error:
+                descriptor.set_error(df_error)
+                logger.error(f"Failed to load CSV DataFrame: {df_error}")
+            else:
+                descriptor.set_dataframe(df)
+                descriptor.needs_sheet_selection = False
+                descriptor.set_loaded()
+                logger.info(f"CSV fully loaded: {descriptor.filename} with {len(df)} rows, {len(df.columns)} columns")
 
         elif descriptor.file_type == 'xlsx':
             descriptor.available_sheets = metadata.get('sheets', [])
             descriptor.set_loaded()
-            logger.info(f"XLSX loaded: {descriptor.filename} with {len(descriptor.available_sheets)} sheets")
+            logger.info(f"XLSX metadata loaded: {descriptor.filename} with {len(descriptor.available_sheets)} sheets")
 
     def on_remove_file(self, file_id: str):
         """
@@ -124,6 +133,7 @@ class FileController:
     def on_sheet_selected(self, file_id: str, sheet_name: str):
         """
         Handle sheet selection for XLSX files.
+        Loads the DataFrame for the selected sheet.
 
         Args:
             file_id: ID of the file
@@ -133,8 +143,27 @@ class FileController:
 
         # Get file descriptor
         descriptor = self.app_controller.file_model.get_file(file_id)
-        if descriptor:
-            descriptor.selected_sheet = sheet_name
+        if not descriptor:
+            logger.error(f"File descriptor not found for ID: {file_id}")
+            return
+
+        # Update selected sheet
+        descriptor.selected_sheet = sheet_name
+
+        # Load DataFrame for the selected sheet
+        df, error = self.file_service.load_xlsx_sheet(str(descriptor.path), sheet_name)
+
+        if error:
+            descriptor.set_error(error)
+            logger.error(f"Failed to load sheet '{sheet_name}': {error}")
+        else:
+            descriptor.set_dataframe(df)
+            descriptor.needs_sheet_selection = False
+            descriptor.set_loaded()
+            logger.info(f"XLSX sheet fully loaded: {descriptor.filename}[{sheet_name}] with {len(df)} rows, {len(df.columns)} columns")
+
+        # Refresh UI to update the file item widget
+        self.refresh_file_list()
 
     def refresh_file_list(self):
         """Refresh the file list in the UI."""

@@ -137,3 +137,45 @@ class FileService:
             return 'xlsx'
         else:
             return 'unknown'
+
+    def load_csv_dataframe(self, file_path: str) -> Tuple[Optional[object], Optional[str]]:
+        """
+        Load CSV file as a pandas DataFrame.
+
+        Returns:
+            (dataframe, error_message)
+        """
+        if pd is None:
+            return None, "pandas is not installed"
+
+        try:
+            df = pd.read_csv(file_path, sep=None, engine='python')
+            logger.info(f"Loaded CSV DataFrame from {file_path}: {len(df)} rows, {len(df.columns)} columns")
+            return df, None
+        except Exception as e:
+            error_msg = f"Failed to load CSV data: {str(e)}"
+            logger.error(error_msg)
+            return None, error_msg
+
+    def load_xlsx_sheet(self, file_path: str, sheet_name: str) -> Tuple[Optional[object], Optional[str]]:
+        """
+        Load a specific sheet from XLSX file as a pandas DataFrame.
+
+        Args:
+            file_path: Path to the XLSX file
+            sheet_name: Name of the sheet to load
+
+        Returns:
+            (dataframe, error_message)
+        """
+        if pd is None:
+            return None, "pandas is not installed"
+
+        try:
+            df = pd.read_excel(file_path, sheet_name=sheet_name)
+            logger.info(f"Loaded XLSX sheet '{sheet_name}' from {file_path}: {len(df)} rows, {len(df.columns)} columns")
+            return df, None
+        except Exception as e:
+            error_msg = f"Failed to load XLSX sheet '{sheet_name}': {str(e)}"
+            logger.error(error_msg)
+            return None, error_msg

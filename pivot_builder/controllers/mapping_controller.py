@@ -151,13 +151,13 @@ class MappingController:
         Returns:
             List of FileDescriptor objects with columns
         """
-        if not self.app or not hasattr(self.app, 'file_model'):
+        if not self.app or not hasattr(self.app, 'files'):
             return []
 
-        # Return only files that have columns loaded
+        # Return only files that have DataFrames loaded
         return [
-            fd for fd in self.app.file_model.file_descriptors
-            if fd.has_dataframe and fd.original_columns
+            fd for fd in self.app.files.values()
+            if fd.has_dataframe and fd.dataframe is not None
         ]
 
     def _gather_files_columns(self) -> Dict[str, List[str]]:
@@ -169,14 +169,16 @@ class MappingController:
         """
         files_columns = {}
 
-        if not self.app or not hasattr(self.app, 'file_model'):
+        if not self.app or not hasattr(self.app, 'files'):
             return files_columns
 
-        # Get all file descriptors from file model
-        for file_desc in self.app.file_model.file_descriptors:
+        # Get all file descriptors from files dictionary
+        for file_desc in self.app.files.values():
             # Only include files that have DataFrames loaded
-            if file_desc.has_dataframe and file_desc.original_columns:
-                files_columns[file_desc.id] = file_desc.original_columns.copy()
+            if file_desc.dataframe is None:
+                continue
+
+            files_columns[file_desc.id] = list(file_desc.dataframe.columns)
 
         logger.debug(f"Gathered columns from {len(files_columns)} files")
         return files_columns

@@ -226,15 +226,14 @@ class PivotView(ttk.Frame):
             text=f"Rows: {num_rows}, Columns: {num_cols}, Values: {num_vals}"
         )
 
-    def refresh_available_fields(self):
-        """Refresh the list of available fields from controller."""
-        if not self.controller:
-            return
+    def refresh_available_fields(self, fields=None):
+        """Refresh the list of available fields from controller or provided list."""
+        if fields is None:
+            if not self.controller:
+                return
+            fields = self.controller.get_available_fields()
 
-        available = self.controller.get_available_fields()
-        self.available_fields.set_items(available)
-
-        # Also refresh current selections
+        self.available_fields.set_items(fields)
         self._refresh_field_lists()
 
     def load_pivot_preview(self, pivot_df):

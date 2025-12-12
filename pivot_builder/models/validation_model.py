@@ -1,34 +1,51 @@
-"""Model for validation results."""
+"""Validation models for pivot builder."""
+
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 
-class ValidationModel:
-    """Manages validation results and errors."""
+@dataclass
+class ValidationIssue:
+    """Represents a single validation issue."""
 
-    def __init__(self):
-        self.errors = []
-        self.warnings = []
-        self.validation_status = None
+    level: str  # "error" | "warning" | "info"
+    code: str
+    message: str
+    context: Optional[dict] = None
 
-    def add_error(self, error_msg):
-        """Add a validation error."""
-        pass
+    def __post_init__(self):
+        """Validate level."""
+        valid_levels = ["error", "warning", "info"]
+        if self.level not in valid_levels:
+            raise ValueError(f"Level must be one of {valid_levels}")
 
-    def add_warning(self, warning_msg):
-        """Add a validation warning."""
-        pass
 
-    def clear_results(self):
-        """Clear all validation results."""
-        pass
+@dataclass
+class ValidationReport:
+    """Collection of validation issues."""
 
-    def get_errors(self):
-        """Get all errors."""
-        pass
+    issues: List[ValidationIssue] = field(default_factory=list)
 
-    def get_warnings(self):
-        """Get all warnings."""
-        pass
+    def has_errors(self) -> bool:
+        """Check if report contains any errors."""
+        return any(issue.level == "error" for issue in self.issues)
 
-    def is_valid(self):
-        """Check if validation passed."""
-        pass
+    def errors(self) -> List[ValidationIssue]:
+        """Get all error-level issues."""
+        return [issue for issue in self.issues if issue.level == "error"]
+
+    def warnings(self) -> List[ValidationIssue]:
+        """Get all warning-level issues."""
+        return [issue for issue in self.issues if issue.level == "warning"]
+
+    def infos(self) -> List[ValidationIssue]:
+        """Get all info-level issues."""
+        return [issue for issue in self.issues if issue.level == "info"]
+
+    def add(self, level: str, code: str, message: str, context: Optional[dict] = None):
+        """Add an issue to the report."""
+        self.issues.append(ValidationIssue(level, code, message, context))
+
+    def clear(self):
+        """Clear all issues."""
+        self.issues.clear()

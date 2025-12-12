@@ -1,7 +1,7 @@
 """Pivot builder view."""
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 
 from pivot_builder.widgets.pivot_field_list_widget import PivotFieldListWidget
 from pivot_builder.widgets.pivot_value_editor_widget import PivotValueEditorWidget
@@ -94,6 +94,23 @@ class PivotView(ttk.Frame):
         )
         self.clear_button.pack(side=tk.LEFT, padx=5)
 
+        # Config save/load buttons
+        ttk.Separator(button_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, padx=10, fill=tk.Y)
+
+        self.save_config_button = ttk.Button(
+            button_frame,
+            text="Save Config",
+            command=self._on_save_config
+        )
+        self.save_config_button.pack(side=tk.LEFT, padx=5)
+
+        self.load_config_button = ttk.Button(
+            button_frame,
+            text="Load Config",
+            command=self._on_load_config
+        )
+        self.load_config_button.pack(side=tk.LEFT, padx=5)
+
         # Info label
         self.info_label = ttk.Label(
             button_frame,
@@ -105,6 +122,34 @@ class PivotView(ttk.Frame):
 
     def _create_preview_ui(self, parent):
         """Create the preview UI."""
+        # Export buttons
+        export_frame = ttk.Frame(parent)
+        export_frame.pack(fill=tk.X, pady=(0, 10))
+
+        ttk.Label(export_frame, text="Export Pivot:", font=("TkDefaultFont", 9, "bold")).pack(side=tk.LEFT, padx=(0, 10))
+
+        self.export_csv_button = ttk.Button(
+            export_frame,
+            text="Export as CSV",
+            command=self._on_export_csv
+        )
+        self.export_csv_button.pack(side=tk.LEFT, padx=5)
+
+        self.export_xlsx_button = ttk.Button(
+            export_frame,
+            text="Export as XLSX",
+            command=self._on_export_xlsx
+        )
+        self.export_xlsx_button.pack(side=tk.LEFT, padx=5)
+
+        self.export_json_button = ttk.Button(
+            export_frame,
+            text="Export as JSON",
+            command=self._on_export_json
+        )
+        self.export_json_button.pack(side=tk.LEFT, padx=5)
+
+        # Pivot table
         self.pivot_table = PivotTableWidget(parent, self.controller)
         self.pivot_table.pack(fill=tk.BOTH, expand=True)
 
@@ -209,3 +254,115 @@ class PivotView(ttk.Frame):
             message: Error message
         """
         messagebox.showerror("Pivot Error", message)
+
+    def _on_save_config(self):
+        """Handle save config button click."""
+        if not self.controller:
+            return
+
+        # Open file dialog for save location
+        file_path = filedialog.asksaveasfilename(
+            title="Save Pivot Configuration",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+
+        if file_path:
+            success = self.controller.save_config(file_path)
+            if success:
+                messagebox.showinfo("Success", f"Configuration saved to:\n{file_path}")
+
+    def _on_load_config(self):
+        """Handle load config button click."""
+        if not self.controller:
+            return
+
+        # Open file dialog for load location
+        file_path = filedialog.askopenfilename(
+            title="Load Pivot Configuration",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+
+        if file_path:
+            success = self.controller.load_config(file_path)
+            if success:
+                messagebox.showinfo("Success", f"Configuration loaded from:\n{file_path}")
+
+    def _on_export_csv(self):
+        """Handle export CSV button click."""
+        if not self.controller:
+            return
+
+        # Check if there's pivot data to export
+        if self.controller.pivot_df is None or len(self.controller.pivot_df) == 0:
+            messagebox.showwarning("No Data", "Please build a pivot table first before exporting.")
+            return
+
+        # Open file dialog for save location
+        file_path = filedialog.asksaveasfilename(
+            title="Export Pivot as CSV",
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+
+        if file_path:
+            export_controller = self.controller.app.export_controller
+            if export_controller:
+                success = export_controller.export_csv(file_path)
+                if success:
+                    messagebox.showinfo("Success", f"Pivot exported to CSV:\n{file_path}")
+                else:
+                    messagebox.showerror("Error", "Failed to export pivot. Check logs for details.")
+
+    def _on_export_xlsx(self):
+        """Handle export XLSX button click."""
+        if not self.controller:
+            return
+
+        # Check if there's pivot data to export
+        if self.controller.pivot_df is None or len(self.controller.pivot_df) == 0:
+            messagebox.showwarning("No Data", "Please build a pivot table first before exporting.")
+            return
+
+        # Open file dialog for save location
+        file_path = filedialog.asksaveasfilename(
+            title="Export Pivot as Excel",
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")]
+        )
+
+        if file_path:
+            export_controller = self.controller.app.export_controller
+            if export_controller:
+                success = export_controller.export_xlsx(file_path)
+                if success:
+                    messagebox.showinfo("Success", f"Pivot exported to Excel:\n{file_path}")
+                else:
+                    messagebox.showerror("Error", "Failed to export pivot. Check logs for details.")
+
+    def _on_export_json(self):
+        """Handle export JSON button click."""
+        if not self.controller:
+            return
+
+        # Check if there's pivot data to export
+        if self.controller.pivot_df is None or len(self.controller.pivot_df) == 0:
+            messagebox.showwarning("No Data", "Please build a pivot table first before exporting.")
+            return
+
+        # Open file dialog for save location
+        file_path = filedialog.asksaveasfilename(
+            title="Export Pivot as JSON",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+
+        if file_path:
+            export_controller = self.controller.app.export_controller
+            if export_controller:
+                success = export_controller.export_json(file_path)
+                if success:
+                    messagebox.showinfo("Success", f"Pivot exported to JSON:\n{file_path}")
+                else:
+                    messagebox.showerror("Error", "Failed to export pivot. Check logs for details.")

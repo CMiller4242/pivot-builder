@@ -6,6 +6,7 @@ import pandas as pd
 from pivot_builder.config.logging_config import logger
 from pivot_builder.models.pivot_model import PivotConfig, PivotValueField
 from pivot_builder.services.pivot_engine_service import PivotEngineService
+from pivot_builder.services.pivot_config_service import PivotConfigService
 
 
 class PivotController:
@@ -21,6 +22,7 @@ class PivotController:
         """
         self.app = app_controller
         self.pivot_engine = pivot_engine_service
+        self.config_service = PivotConfigService()
         self.view = None
 
         # Current pivot configuration
@@ -191,3 +193,53 @@ class PivotController:
             Current pivot DataFrame or None
         """
         return self.pivot_df
+
+    def save_config(self, path: str) -> bool:
+        """
+        Save current pivot configuration to JSON file.
+
+        Args:
+            path: File path to save to
+
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info(f"Saving pivot configuration to {path}")
+        success = self.config_service.save(self.config, path)
+
+        if success:
+            logger.info("Pivot configuration saved successfully")
+        else:
+            logger.error("Failed to save pivot configuration")
+            if self.view:
+                self.view.show_error("Failed to save configuration. Check logs for details.")
+
+        return success
+
+    def load_config(self, path: str) -> bool:
+        """
+        Load pivot configuration from JSON file.
+
+        Args:
+            path: File path to load from
+
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info(f"Loading pivot configuration from {path}")
+        loaded_config = self.config_service.load(path)
+
+        if loaded_config:
+            self.config = loaded_config
+            logger.info("Pivot configuration loaded successfully")
+
+            # Refresh view to show loaded configuration
+            if self.view:
+                self.view.refresh_available_fields()
+
+            return True
+        else:
+            logger.error("Failed to load pivot configuration")
+            if self.view:
+                self.view.show_error("Failed to load configuration. Check file format and logs.")
+            return False

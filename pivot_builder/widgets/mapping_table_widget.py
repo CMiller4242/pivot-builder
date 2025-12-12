@@ -45,9 +45,6 @@ class MappingTableWidget(ttk.Frame):
         self.sheet.enable_bindings()
         self.sheet.pack(fill=tk.BOTH, expand=True)
 
-        # Configure sheet behavior
-        self.sheet.edit_bindings(enable=True)
-
         # Bind cell edit event
         self.sheet.bind("<<SheetModified>>", self._on_cell_edited)
 

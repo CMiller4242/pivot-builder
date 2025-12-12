@@ -181,6 +181,58 @@ class MappingController:
         logger.debug(f"Gathered columns from {len(files_columns)} files")
         return files_columns
 
+    def build_combined_dataset(self):
+        """
+        Build combined dataset from all loaded files using current mappings.
+
+        This method:
+        1. Gets all files with loaded DataFrames
+        2. Calls dataset_builder_service to merge them using canonical mappings
+        3. Stores result in app.combined_dataset
+        4. Triggers preview refresh
+        """
+        logger.info("Building combined dataset from current mappings")
+
+        try:
+            # Get dataset builder service from app controller
+            if not hasattr(self.app, 'dataset_builder_service'):
+                logger.error("DatasetBuilderService not available in AppController")
+                if self.view:
+                    self.view.show_error("Dataset builder service not initialized")
+                return
+
+            # Get all loaded files
+            files = self.get_files_list()
+
+            if not files:
+                logger.warning("No files with DataFrames to combine")
+                if self.view:
+                    self.view.show_error("No files loaded. Please add and load files first.")
+                return
+
+            # Build combined dataset
+            combined_dataset = self.app.dataset_builder_service.build_combined_dataset(
+                files,
+                self.mapping_model
+            )
+
+            # Store in app controller
+            self.app.combined_dataset = combined_dataset
+
+            logger.info(
+                f"Combined dataset built: {combined_dataset.get_row_count()} rows, "
+                f"{len(combined_dataset.get_canonical_columns())} canonical columns"
+            )
+
+            # Refresh preview if available
+            if self.app.preview_controller:
+                self.app.preview_controller.refresh_combined_preview()
+
+        except Exception as e:
+            logger.error(f"Error building combined dataset: {e}", exc_info=True)
+            if self.view:
+                self.view.show_error(f"Failed to build combined dataset: {str(e)}")
+
     def export_mapping_config(self) -> dict:
         """
         Export current mapping configuration.

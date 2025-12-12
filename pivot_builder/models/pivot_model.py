@@ -85,6 +85,53 @@ class PivotConfig:
         self.values.clear()
         self.filters.clear()
 
+    def to_dict(self) -> dict:
+        """
+        Serialize pivot configuration to dictionary.
+
+        Returns:
+            Dictionary representation suitable for JSON serialization
+        """
+        return {
+            'rows': self.rows.copy(),
+            'columns': self.columns.copy(),
+            'values': [
+                {'column': vf.column, 'aggregation': vf.aggregation}
+                for vf in self.values
+            ],
+            'filters': {k: v.copy() for k, v in self.filters.items()}
+        }
+
+    @staticmethod
+    def from_dict(data: dict) -> "PivotConfig":
+        """
+        Deserialize pivot configuration from dictionary.
+
+        Args:
+            data: Dictionary with configuration data
+
+        Returns:
+            PivotConfig instance
+        """
+        config = PivotConfig()
+        config.rows = data.get('rows', []).copy()
+        config.columns = data.get('columns', []).copy()
+
+        # Deserialize value fields
+        for vf_data in data.get('values', []):
+            value_field = PivotValueField(
+                column=vf_data['column'],
+                aggregation=vf_data['aggregation']
+            )
+            config.values.append(value_field)
+
+        # Deserialize filters
+        config.filters = {
+            k: v.copy() for k, v in data.get('filters', {}).items()
+        }
+
+        return config
+
 
 class PivotModel:
     """Manages pivot table configuration (legacy wrapper)."""

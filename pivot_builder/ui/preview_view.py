@@ -7,7 +7,7 @@ from pivot_builder.widgets.preview_table_widget import PreviewTableWidget
 
 
 class PreviewView(ttk.Frame):
-    """View for previewing file data."""
+    """View for previewing file data and combined dataset."""
 
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -18,9 +18,25 @@ class PreviewView(ttk.Frame):
         self._create_ui()
 
     def _create_ui(self):
-        """Create the UI components."""
+        """Create the UI components with tabbed interface."""
+        # Create notebook for Per-File and Combined tabs
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Tab 1: Per-File Preview
+        self.per_file_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.per_file_frame, text="Per-File")
+        self._create_per_file_tab()
+
+        # Tab 2: Combined Dataset Preview
+        self.combined_frame = ttk.Frame(self.notebook)
+        self.notebook.add(self.combined_frame, text="Combined")
+        self._create_combined_tab()
+
+    def _create_per_file_tab(self):
+        """Create the per-file preview tab."""
         # Top control panel
-        control_panel = ttk.Frame(self)
+        control_panel = ttk.Frame(self.per_file_frame)
         control_panel.pack(fill=tk.X, padx=10, pady=10)
 
         # File selector
@@ -44,11 +60,37 @@ class PreviewView(ttk.Frame):
         self.info_label.pack(side=tk.RIGHT, padx=10)
 
         # Preview table
-        self.preview_table = PreviewTableWidget(self, self.controller)
+        self.preview_table = PreviewTableWidget(self.per_file_frame, self.controller)
         self.preview_table.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
 
         # Initial empty state
         self.preview_table.set_empty_message("No files loaded. Add files to preview data.")
+
+    def _create_combined_tab(self):
+        """Create the combined dataset preview tab."""
+        # Info panel
+        info_panel = ttk.Frame(self.combined_frame)
+        info_panel.pack(fill=tk.X, padx=10, pady=10)
+
+        self.combined_info_label = ttk.Label(
+            info_panel,
+            text="No combined dataset available. Load files and build mapping first.",
+            foreground="gray"
+        )
+        self.combined_info_label.pack(side=tk.LEFT)
+
+        # Preview table
+        self.combined_preview_table = PreviewTableWidget(self.combined_frame, self.controller)
+        self.combined_preview_table.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+        # Initial empty state
+        self.combined_preview_table.set_empty_message(
+            "No combined dataset available.\n\n"
+            "To create combined dataset:\n"
+            "1. Load files with data\n"
+            "2. Go to Mapping tab\n"
+            "3. Click 'Rebuild Combined Dataset'"
+        )
 
     def _on_file_selected(self, event=None):
         """Handle file selection from dropdown."""
@@ -128,6 +170,28 @@ class PreviewView(ttk.Frame):
         else:
             self.preview_table.set_empty_message("No preview data available")
             self.info_label.config(text="")
+
+    def load_combined_preview(self, preview_df):
+        """
+        Load combined dataset preview.
+
+        Args:
+            preview_df: DataFrame with preview data (or None if empty)
+        """
+        if preview_df is None or len(preview_df) == 0:
+            self.combined_preview_table.set_empty_message(
+                "Combined dataset is empty.\n\n"
+                "Make sure files are loaded with valid mappings."
+            )
+            self.combined_info_label.config(text="No combined dataset available")
+            return
+
+        # Load the preview
+        self.combined_preview_table.load_dataframe(preview_df)
+
+        # Update info label
+        info_text = f"Showing {len(preview_df)} rows, {len(preview_df.columns)} columns"
+        self.combined_info_label.config(text=info_text)
 
     def _get_file_display_name(self, file_descriptor):
         """Get display name for file in dropdown."""

@@ -39,6 +39,17 @@ class ColumnMappingView(ttk.Frame):
         )
         self.rebuild_button.pack(side=tk.LEFT, padx=5)
 
+        # Separator
+        ttk.Separator(control_frame, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=10)
+
+        # Build Combined Dataset button
+        self.build_combined_button = ttk.Button(
+            control_frame,
+            text="Rebuild Combined Dataset",
+            command=self._on_build_combined_clicked
+        )
+        self.build_combined_button.pack(side=tk.LEFT, padx=5)
+
         # Info label
         self.info_label = ttk.Label(
             control_frame,
@@ -118,6 +129,11 @@ class ColumnMappingView(ttk.Frame):
         """Handle rebuild suggestions button click."""
         if self.controller:
             self.controller.rebuild_mapping_from_files()
+
+    def _on_build_combined_clicked(self):
+        """Handle rebuild combined dataset button click."""
+        if self.controller:
+            self.controller.build_combined_dataset()
 
     def refresh_mapping(self, mapping_model):
         """

@@ -90,3 +90,39 @@ class PreviewController:
     def update_preview(self, dataframe):
         """Update preview with new dataframe (placeholder for future)."""
         logger.info("Preview updated with new dataframe")
+
+    def refresh_combined_preview(self, n_rows: Optional[int] = None):
+        """
+        Refresh the combined dataset preview.
+
+        Args:
+            n_rows: Number of rows to preview (defaults to config value)
+        """
+        if n_rows is None:
+            n_rows = DEFAULT_PREVIEW_ROWS
+
+        logger.info("Refreshing combined dataset preview")
+
+        # Get combined dataset from app controller
+        if not hasattr(self.app_controller, 'combined_dataset'):
+            logger.warning("No combined dataset available")
+            return
+
+        combined_dataset = self.app_controller.combined_dataset
+
+        if combined_dataset.df is None or len(combined_dataset.df) == 0:
+            logger.warning("Combined dataset is empty")
+            if self.view:
+                self.view.load_combined_preview(None)
+            return
+
+        # Get preview (first n rows)
+        preview_df = combined_dataset.df.head(n_rows)
+
+        # Send to view
+        if self.view:
+            self.view.load_combined_preview(preview_df)
+            logger.info(
+                f"Combined preview loaded: {len(preview_df)} rows, "
+                f"{len(preview_df.columns)} columns"
+            )

@@ -31,7 +31,7 @@ def main():
         app_controller.column_mapping_model
     )
     preview_controller = PreviewController(app_controller)
-    pivot_controller = PivotController(app_controller)
+    pivot_controller = PivotController(app_controller, app_controller.pivot_engine_service)
     export_controller = ExportController(app_controller)
 
     # Wire controllers to app controller

@@ -10,6 +10,7 @@ from pivot_builder.models.export_model import ExportModel
 from pivot_builder.services.column_normalization_service import ColumnNormalizationService
 from pivot_builder.services.column_matching_service import ColumnMatchingService
 from pivot_builder.services.dataset_builder_service import DatasetBuilderService
+from pivot_builder.services.pivot_engine_service import PivotEngineService
 
 
 class AppController:
@@ -29,6 +30,9 @@ class AppController:
         # Initialize dataset builder service and combined dataset
         self.dataset_builder_service = DatasetBuilderService()
         self.combined_dataset = CombinedDataset()
+
+        # Initialize pivot engine service
+        self.pivot_engine_service = PivotEngineService()
 
         # Other models
         self.pivot_model = PivotModel()

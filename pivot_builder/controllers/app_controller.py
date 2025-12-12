@@ -5,7 +5,7 @@ from pivot_builder.models.file_model import FileModel
 from pivot_builder.models.dataset_model import DatasetModel, CombinedDataset
 from pivot_builder.models.mapping_model import ColumnMappingModel, MappingRule
 from pivot_builder.models.pivot_model import PivotModel
-from pivot_builder.models.validation_model import ValidationModel
+from pivot_builder.models.validation_model import ValidationReport
 from pivot_builder.models.export_model import ExportModel
 from pivot_builder.services.column_normalization_service import ColumnNormalizationService
 from pivot_builder.services.column_matching_service import ColumnMatchingService
@@ -36,7 +36,7 @@ class AppController:
 
         # Other models
         self.pivot_model = PivotModel()
-        self.validation_model = ValidationModel()
+        self.validation_report: ValidationReport | None = None
         self.export_model = ExportModel()
 
         # Sub-controllers will be initialized later

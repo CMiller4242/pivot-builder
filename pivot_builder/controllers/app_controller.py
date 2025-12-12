@@ -45,6 +45,44 @@ class AppController:
         self.preview_controller = None
         self.pivot_controller = None
         self.export_controller = None
+        self.validation_controller = None
+
+        # Debounce/throttle system for rebuilds
+        self._scheduled_tasks = {}  # key -> after_id
+
+        # Status bar (will be set by main window)
+        self.status_bar = None
+
+    def schedule_task(self, key: str, delay_ms: int, fn):
+        """
+        Schedule a task with debouncing.
+
+        If the key is already scheduled, cancel and reschedule.
+        This prevents rebuild storms when user performs rapid actions.
+
+        Args:
+            key: Unique identifier for the task
+            delay_ms: Delay in milliseconds
+            fn: Function to call after delay
+        """
+        # Cancel existing scheduled task with this key
+        if key in self._scheduled_tasks:
+            if hasattr(self, 'main_window') and self.main_window:
+                try:
+                    self.main_window.after_cancel(self._scheduled_tasks[key])
+                    logger.debug(f"Cancelled scheduled task: {key}")
+                except:
+                    pass  # Task may have already executed
+
+        # Schedule new task
+        if hasattr(self, 'main_window') and self.main_window:
+            after_id = self.main_window.after(delay_ms, fn)
+            self._scheduled_tasks[key] = after_id
+            logger.debug(f"Scheduled task '{key}' with {delay_ms}ms delay")
+        else:
+            # No main window yet, execute immediately
+            logger.warning(f"No main window for scheduling, executing '{key}' immediately")
+            fn()
 
     @property
     def files(self):
@@ -70,6 +108,14 @@ class AppController:
     def set_export_controller(self, controller):
         """Set the export controller."""
         self.export_controller = controller
+
+    def set_validation_controller(self, controller):
+        """Set the validation controller."""
+        self.validation_controller = controller
+
+    def set_status_bar(self, status_bar):
+        """Set the status bar widget."""
+        self.status_bar = status_bar
 
     def register_file(self, file_descriptor):
         """

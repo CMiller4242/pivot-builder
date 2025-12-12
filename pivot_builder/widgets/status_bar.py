@@ -12,6 +12,15 @@ class StatusBar(ttk.Frame):
         self.label = ttk.Label(self, text="Ready", relief=tk.SUNKEN, anchor=tk.W)
         self.label.pack(fill=tk.X, expand=True)
 
+    def set(self, text: str):
+        """
+        Set status message.
+
+        Args:
+            text: Status text to display
+        """
+        self.label.config(text=text)
+
     def set_status(self, message):
-        """Set status message."""
-        self.label.config(text=message)
+        """Set status message (backward compatibility)."""
+        self.set(message)

@@ -8,7 +8,7 @@ from pivot_builder.ui.menus_toolbar import MenuBar, ToolBar
 from pivot_builder.ui.file_panel import FilePanel
 from pivot_builder.ui.column_mapping_view import ColumnMappingView
 from pivot_builder.ui.preview_view import PreviewView
-from pivot_builder.ui.pivot_builder_view import PivotBuilderView
+from pivot_builder.ui.pivot_view import PivotView
 from pivot_builder.ui.validation_panel import ValidationPanel
 from pivot_builder.widgets.status_bar import StatusBar
 
@@ -60,7 +60,7 @@ class MainWindow:
         self.preview_view = PreviewView(self.notebook, self.app_controller.preview_controller)
         self.notebook.add(self.preview_view, text="Preview")
 
-        self.pivot_view = PivotBuilderView(self.notebook, self.app_controller.pivot_controller)
+        self.pivot_view = PivotView(self.notebook, self.app_controller.pivot_controller)
         self.notebook.add(self.pivot_view, text="Pivot")
 
         self.validation_panel = ValidationPanel(self.notebook, None)

@@ -230,6 +230,10 @@ class MappingController:
             if self.app.preview_controller:
                 self.app.preview_controller.refresh_combined_preview()
 
+            # Notify pivot controller of new available fields
+            if self.app.pivot_controller and self.app.pivot_controller.view:
+                self.app.pivot_controller.view.refresh_available_fields()
+
         except Exception as e:
             logger.error(f"Error building combined dataset: {e}", exc_info=True)
             if self.view:

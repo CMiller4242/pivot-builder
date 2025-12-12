@@ -42,6 +42,11 @@ class AppController:
         self.pivot_controller = None
         self.export_controller = None
 
+    @property
+    def files(self):
+        """Convenience property to access files dictionary directly."""
+        return self.file_model.files
+
     def set_file_controller(self, controller):
         """Set the file controller."""
         self.file_controller = controller
